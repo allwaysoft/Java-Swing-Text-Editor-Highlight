@@ -176,6 +176,7 @@ public class Document extends JFrame implements ActionListener, DocumentListener
 					// We have to add one here because line numbers start at 0 for getLineOfOffset
 					// and we want it to start at 1 for display.
 					linenum += 1;
+					columnnum += 1;
 				} catch (Exception ex) {
 				}
 
@@ -346,7 +347,7 @@ public class Document extends JFrame implements ActionListener, DocumentListener
 		pane.add(toolBar, BorderLayout.SOUTH);
 
 		status = new JTextField();
-		status.setText("行: 1 列: 0");
+		status.setText("行: 1 列: 1");
 		toolBar.add(status);
 
 		setVisible(true);
