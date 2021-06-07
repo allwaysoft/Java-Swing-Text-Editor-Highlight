@@ -1,6 +1,8 @@
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
+import javax.swing.event.CaretEvent;
+import javax.swing.event.CaretListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
@@ -108,7 +110,6 @@ public class Document extends JFrame implements ActionListener, DocumentListener
 	private JMenuBar menuBar;
 	private String pad;
 	private JToolBar toolBar;
-	private JLabel lblNewLabel;
 	private JMenu file_1;
 	private JMenuItem n;
 	private JMenuItem open;
@@ -122,13 +123,12 @@ public class Document extends JFrame implements ActionListener, DocumentListener
 	private JMenuItem find;
 	private JMenuItem sall;
 	private JMenu format;
-	private JMenuItem auto;
 	private JMenuItem font;
 	private JMenu view;
-	private JMenuItem mntmNewMenuItem;
-	private JMenuItem status;
+	private JMenuItem showstatus;
 	private JMenu help;
 	private JMenuItem about;
+	private JTextField status;
 
 	public Document() {
 
@@ -137,11 +137,54 @@ public class Document extends JFrame implements ActionListener, DocumentListener
 		setLocationRelativeTo(null);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		textArea.getDocument().addDocumentListener(this);
+
 		Container pane = getContentPane();
 		pane.setLayout(new BorderLayout());
 
 		textArea.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_JAVA);
 		textArea.setCodeFoldingEnabled(true);
+		textArea.addCaretListener(new CaretListener() {
+			// Each time the caret is moved, it will trigger the listener and its method
+			// caretUpdate.
+			// It will then pass the event to the update method including the source of the
+			// event (which is our textarea control)
+			public void caretUpdate(CaretEvent e) {
+				JTextArea editArea = (JTextArea) e.getSource();
+
+				// Lets start with some default values for the line and column.
+				int linenum = 1;
+				int columnnum = 1;
+
+				// We create a try catch to catch any exceptions. We will simply ignore such an
+				// error for our demonstration.
+				try {
+					// First we find the position of the caret. This is the number of where the
+					// caret is in relation to the start of the JTextArea
+					// in the upper left corner. We use this position to find offset values (eg what
+					// line we are on for the given position as well as
+					// what position that line starts on.
+					int caretpos = editArea.getCaretPosition();
+					linenum = editArea.getLineOfOffset(caretpos);
+
+					// We subtract the offset of where our line starts from the overall caret
+					// position.
+					// So lets say that we are on line 5 and that line starts at caret position 100,
+					// if our caret position is currently 106
+					// we know that we must be on column 6 of line 5.
+					columnnum = caretpos - editArea.getLineStartOffset(linenum);
+
+					// We have to add one here because line numbers start at 0 for getLineOfOffset
+					// and we want it to start at 1 for display.
+					linenum += 1;
+				} catch (Exception ex) {
+				}
+
+				// Once we know the position of the line and the column, pass it to a helper
+				// function for updating the status bar.
+				updateStatus(linenum, columnnum);
+			}
+		});
+
 		RTextScrollPane sp = new RTextScrollPane(textArea);
 		pane.add(sp);
 
@@ -258,20 +301,24 @@ public class Document extends JFrame implements ActionListener, DocumentListener
 		format = new JMenu("格式");
 		menuBar.add(format);
 
-		auto = new JMenuItem("自动换行");
-		format.add(auto);
-
 		font = new JMenuItem("字体");
+		font.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				JFontDialog fontDialog = new JFontDialog();
+				fontDialog.setVisible(true);
+				Font selectedFont = fontDialog.getFont();
+				System.out.println(selectedFont.toString());
+				textArea.setFont(selectedFont);
+
+			}
+		});
 		format.add(font);
 
 		view = new JMenu("查看");
 		menuBar.add(view);
 
-		mntmNewMenuItem = new JMenuItem("缩放");
-		view.add(mntmNewMenuItem);
-
-		status = new JMenuItem("状态栏");
-		status.addActionListener(new ActionListener() {
+		showstatus = new JMenuItem("状态栏");
+		showstatus.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				if (toolBarEnable == true) {
 					toolBar.setVisible(false);
@@ -283,7 +330,7 @@ public class Document extends JFrame implements ActionListener, DocumentListener
 				}
 			}
 		});
-		view.add(status);
+		view.add(showstatus);
 
 		help = new JMenu("帮助");
 		menuBar.add(help);
@@ -298,8 +345,9 @@ public class Document extends JFrame implements ActionListener, DocumentListener
 
 		pane.add(toolBar, BorderLayout.SOUTH);
 
-		lblNewLabel = new JLabel("状态栏");
-		toolBar.add(lblNewLabel);
+		status = new JTextField();
+		status.setText("行: 1 列: 0");
+		toolBar.add(status);
 
 		setVisible(true);
 
@@ -360,6 +408,12 @@ public class Document extends JFrame implements ActionListener, DocumentListener
 			FindDialogDoc find = new FindDialogDoc(this, true);
 			find.showDialog();
 		}
+	}
+
+// This helper function updates the status bar with the line number and column
+// number.
+	private void updateStatus(int linenumber, int columnnumber) {
+		status.setText("行: " + linenumber + " 列: " + columnnumber);
 	}
 
 }

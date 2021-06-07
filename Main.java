@@ -1,10 +1,16 @@
+
+import java.awt.Font;
+
+/**
+ *
+ * @author Pankaj
+ */
 public class Main {
+
 	public static void main(String[] args) {
-		System.out.println("This is text");
-		System.out.println('A');
-		System.out.println(53);
-		System.out.println(23.08f);
-		System.out.println(1.97);
-		System.out.println(true);
+		JFontDialog fontDialog = new JFontDialog();
+		fontDialog.setVisible(true);
+		Font selectedFont = fontDialog.getFont();
+		System.out.println(selectedFont.toString());
 	}
 }
